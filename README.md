@@ -86,7 +86,7 @@ Instead of treating neural networks as stacked layers, Nested Learning views the
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/nested-learning-heart-disease.git
+git clone https://github.com/kmkholm/Nested-Learning-for-Heart-Disease-Prediction.git
 cd nested-learning-heart-disease
 
 # Install required packages
