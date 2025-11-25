@@ -1,0 +1,28 @@
+# Nested Learning for Heart Disease Prediction
+# Requirements file for pip installation
+# Install with: pip install -r requirements.txt
+
+# Core Deep Learning
+torch>=2.0.0
+torchvision>=0.15.0
+
+# Data Processing
+numpy>=1.21.0
+pandas>=1.3.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+
+# Optional: For Jupyter notebooks (if you want to create tutorials)
+# jupyter>=1.0.0
+# ipython>=7.30.0
+
+# Optional: For better progress bars
+# tqdm>=4.62.0
+
+# Optional: For reproducibility
+# pytorch-lightning>=1.5.0

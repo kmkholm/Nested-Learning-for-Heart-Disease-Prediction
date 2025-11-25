@@ -1,0 +1,341 @@
+================================================================================
+NESTED LEARNING ARCHITECTURE FOR HEART DISEASE PREDICTION
+================================================================================
+
+PART 1: CONCEPTUAL VIEW - NESTED OPTIMIZATION LEVELS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         NESTED LEARNING HIERARCHY                            │
+│                                                                              │
+│  Level 3 (Highest Frequency: ∞)                                            │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  INPUT PROJECTION LAYER                                         │        │
+│  │  • Updates: Every Step                                          │        │
+│  │  • Purpose: Feature transformation                              │        │
+│  │  • Components: Linear → BatchNorm → ReLU → Dropout             │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                              ↓                                               │
+│  Level 2 (High Frequency: 4, 2, 1)                                         │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  CONTINUUM MEMORY SYSTEM                                        │        │
+│  │  ┌──────────────────────────────────────────────────────────┐  │        │
+│  │  │  High-Freq Memory (f=4) - Updates every 1 step          │  │        │
+│  │  │  • Working memory                                         │  │        │
+│  │  │  • Immediate context processing                           │  │        │
+│  │  └──────────────────────────────────────────────────────────┘  │        │
+│  │                              ↓                                  │        │
+│  │  ┌──────────────────────────────────────────────────────────┐  │        │
+│  │  │  Mid-Freq Memory (f=2) - Updates every 2 steps          │  │        │
+│  │  │  • Pattern recognition                                    │  │        │
+│  │  │  • Short-term consolidation                               │  │        │
+│  │  └──────────────────────────────────────────────────────────┘  │        │
+│  │                              ↓                                  │        │
+│  │  ┌──────────────────────────────────────────────────────────┐  │        │
+│  │  │  Low-Freq Memory (f=1) - Updates every 4 steps          │  │        │
+│  │  │  • Long-term patterns                                     │  │        │
+│  │  │  • Stable representations                                 │  │        │
+│  │  └──────────────────────────────────────────────────────────┘  │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                              ↓                                               │
+│  Level 1 (Mid Frequency: 2)                                                 │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  SELF-MODIFYING MEMORY                                          │        │
+│  │  • Updates: Every 2 Steps                                       │        │
+│  │  • Purpose: Context-dependent adaptation                        │        │
+│  │  • Learns to modify its own parameters                          │        │
+│  │  • Components:                                                  │        │
+│  │    - K, Q, V projections (dynamic)                             │        │
+│  │    - Self-attention mechanism                                   │        │
+│  │    - Meta-network (generates updates)                           │        │
+│  │    - Memory state tracker                                       │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                              ↓                                               │
+│  Level 0 (Lowest Frequency: 1)                                              │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  LONG-TERM MEMORY                                               │        │
+│  │  • Updates: Every 4 Steps                                       │        │
+│  │  • Purpose: Pre-training knowledge storage                      │        │
+│  │  • Stable, slow-changing representations                        │        │
+│  │  • Components: Linear → LayerNorm → ReLU → Dropout            │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+│                              ↓                                               │
+│  ┌────────────────────────────────────────────────────────────────┐        │
+│  │  CLASSIFICATION HEAD                                            │        │
+│  │  • Linear(64→32) → ReLU → Dropout → Linear(32→2)              │        │
+│  │  • Output: Disease probability [0, 1]                           │        │
+│  └────────────────────────────────────────────────────────────────┘        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+PART 2: DATA FLOW WITH EXAMPLE
+================================================================================
+
+Input: Patient data [age=55, sex=1, cp=3, trestbps=140, ...]
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: Feature Encoding (30 features after one-hot encoding)            │
+│ [55, 1, 0, 0, 1, 0, 140, 250, 1, ...] → [x₁, x₂, ..., x₃₀]             │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: Input Projection (Updates every step)                            │
+│ R³⁰ → R¹²⁸                                                               │
+│ Apply: Linear → BatchNorm → ReLU → Dropout(0.2)                         │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: Continuum Memory System (Frequency-based updates)                │
+│                                                                           │
+│ Check update mask for current global_step:                               │
+│ - If step ≡ 0 (mod 1): Update high-freq layer                           │
+│ - If step ≡ 0 (mod 2): Update mid-freq layer                            │
+│ - If step ≡ 0 (mod 4): Update low-freq layer                            │
+│                                                                           │
+│ Forward pass through nested layers:                                      │
+│ R¹²⁸ → R²⁵⁶ (high-freq) → R²⁵⁶ (mid-freq) → R¹²⁸ (low-freq)           │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: Self-Modifying Memory (Updates every 2 steps)                    │
+│                                                                           │
+│ Reshape: R¹²⁸ → R¹ˣ¹²⁸ (add sequence dimension)                         │
+│                                                                           │
+│ Compute dynamic projections:                                             │
+│ K = key_proj(x)     [1, 128]                                             │
+│ Q = query_proj(x)   [1, 128]                                             │
+│ V = value_proj(x)   [1, 128]                                             │
+│                                                                           │
+│ Self-attention:                                                           │
+│ attention = softmax(Q @ K.T / √128) @ V                                  │
+│                                                                           │
+│ Meta-learning:                                                            │
+│ meta_updates = meta_network(attention)                                    │
+│ output = attention + meta_updates                                         │
+│                                                                           │
+│ Memory update:                                                            │
+│ memory_state ← 0.9*memory_state + 0.1*output.mean()                     │
+│                                                                           │
+│ Output: R¹²⁸ → R⁶⁴                                                       │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: Long-term Memory (Updates every 4 steps)                         │
+│                                                                           │
+│ If global_step % 4 == 0:                                                 │
+│   Allow gradient flow through long-term memory                           │
+│ Else:                                                                     │
+│   Use long-term memory without gradient (frozen)                         │
+│                                                                           │
+│ Apply: Linear → LayerNorm → ReLU → Dropout(0.1)                         │
+│ R⁶⁴ → R⁶⁴                                                                │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+┌──────────────────────────────────────────────────────────────────────────┐
+│ STEP 6: Classification Head (Updates every step)                         │
+│ R⁶⁴ → R³² → R²                                                           │
+│ Output logits: [logit_no_disease, logit_disease]                         │
+│ Apply softmax: [P(no disease), P(disease)]                               │
+└──────────────────────────────────────────────────────────────────────────┘
+        ↓
+Final Prediction: "Disease" with probability 0.87
+
+
+PART 3: OPTIMIZER - DEEP MOMENTUM
+================================================================================
+
+Traditional Momentum:
+┌─────────────────────────────────────────────────────────────────────────┐
+│  m_t = momentum * m_{t-1} - learning_rate * gradient                    │
+│  θ_t = θ_{t-1} + m_t                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Deep Momentum (Our Implementation):
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Step 1: View momentum as associative memory                            │
+│  ┌────────────────────────────────────────────────────────────┐        │
+│  │  Objective: min_m ⟨m, ∇L⟩ + (1/2η)||m - m_{t-1}||²         │        │
+│  └────────────────────────────────────────────────────────────┘        │
+│                                                                          │
+│  Step 2: Enhanced with delta-rule                                       │
+│  ┌────────────────────────────────────────────────────────────┐        │
+│  │  m_t = (α*I - ∇L^T∇L)*m_{t-1} - η*∇L                       │        │
+│  └────────────────────────────────────────────────────────────┘        │
+│                                                                          │
+│  Step 3: Non-linear compression (implicit in implementation)            │
+│  ┌────────────────────────────────────────────────────────────┐        │
+│  │  Deep memory network compresses gradient history            │        │
+│  │  More capacity than linear momentum                          │        │
+│  └────────────────────────────────────────────────────────────┘        │
+│                                                                          │
+│  Step 4: Parameter update                                               │
+│  ┌────────────────────────────────────────────────────────────┐        │
+│  │  θ_t = θ_{t-1} + m_t                                         │        │
+│  └────────────────────────────────────────────────────────────┘        │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+PART 4: TRAINING TIMELINE EXAMPLE
+================================================================================
+
+Global Step Timeline (first 16 steps):
+
+Step 1:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✓] Low-Freq  [✓] Self-Mod  [✓] Long-Term
+Step 2:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✗] Self-Mod  [✗] Long-Term
+Step 3:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✓] Self-Mod  [✗] Long-Term
+Step 4:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✗] Self-Mod  [✗] Long-Term
+Step 5:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✓] Low-Freq  [✓] Self-Mod  [✓] Long-Term
+Step 6:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✗] Self-Mod  [✗] Long-Term
+Step 7:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✓] Self-Mod  [✗] Long-Term
+Step 8:  [✓] Input Proj  [✓] High-Freq  [✓] Mid-Freq  [✗] Low-Freq  [✗] Self-Mod  [✗] Long-Term
+...
+
+Legend: [✓] = Gradient flows (parameter updates)
+        [✗] = Frozen (no parameter updates)
+
+
+PART 5: COMPARISON - TRADITIONAL VS NESTED LEARNING
+================================================================================
+
+Traditional Deep Learning:
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Input → Layer1 → Layer2 → Layer3 → Layer4 → Output                    │
+│           ↓        ↓        ↓        ↓                                  │
+│         [All layers updated every single step]                          │
+│         [Same learning rate, same optimizer]                            │
+│         [No hierarchical time scales]                                   │
+│                                                                          │
+│  Characteristics:                                                        │
+│  • Uniform update frequency                                             │
+│  • Flat optimization structure                                          │
+│  • No memory separation                                                 │
+│  • Catastrophic forgetting common                                       │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Nested Learning (Our Approach):
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Input → [Fast Layer] → [Mid Layer] → [Slow Layer] → Output            │
+│           ↓ every 1      ↓ every 2     ↓ every 4                       │
+│           step          steps          steps                            │
+│                                                                          │
+│  Characteristics:                                                        │
+│  • Hierarchical update frequencies                                      │
+│  • Nested optimization structure                                        │
+│  • Natural memory separation                                            │
+│  • Better continual learning                                            │
+│  • Interpretable learning dynamics                                      │
+│  • Neuroscientifically plausible                                        │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+PART 6: BIOLOGICAL INSPIRATION
+================================================================================
+
+Human Brain Hierarchy:
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  Neocortex (Slow consolidation)                                         │
+│  ├─ Long-term memory storage                      ← Level 0 (f=1)      │
+│  ├─ Abstract knowledge                                                  │
+│  └─ Slow-changing patterns                                              │
+│                         ↑ Systems consolidation                         │
+│                                                                          │
+│  Hippocampus (Online consolidation)                                     │
+│  ├─ Pattern completion                            ← Level 1 (f=2)      │
+│  ├─ Memory indexing                                                     │
+│  └─ Context binding                                                     │
+│                         ↑ Synaptic consolidation                        │
+│                                                                          │
+│  Working Memory (Immediate processing)                                  │
+│  ├─ Attention mechanisms                          ← Level 2 (f=4)      │
+│  ├─ Active maintenance                                                  │
+│  └─ Context representation                                              │
+│                                                                          │
+│  Sensory Cortex (Fast processing)                                       │
+│  ├─ Feature extraction                            ← Level 3 (f=∞)      │
+│  ├─ Immediate response                                                  │
+│  └─ Rapid adaptation                                                    │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Brain Wave Frequencies → Update Frequencies:
+┌─────────────────────────────────────────────────────────────────────────┐
+│  Delta (0.5-4 Hz)  → Long-term memory      → Level 0 (updates/4)       │
+│  Theta (4-8 Hz)    → Memory consolidation  → Level 1 (updates/2)       │
+│  Alpha (8-13 Hz)   → Active processing     → Level 2 (updates/1)       │
+│  Beta (13-30 Hz)   → Attention/focus       → Level 3 (updates/1)       │
+│  Gamma (30-100 Hz) → Feature binding       → Input projection          │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+PART 7: MATHEMATICAL FORMULATION
+================================================================================
+
+Complete Nested Learning Formulation:
+
+For input x ∈ R^d and target y ∈ {0,1}, the model computes:
+
+Level 3 (Input Projection, f=∞):
+  h₃ = σ(BN(W₃x + b₃))
+  where W₃ ∈ R^{128×d}, updated every step
+
+Level 2 (Continuum Memory, f={4,2,1}):
+  h₂⁽⁴⁾ = σ(LN(W₂⁽⁴⁾h₃ + b₂⁽⁴⁾))    [f=4, every step]
+  h₂⁽²⁾ = σ(LN(W₂⁽²⁾h₂⁽⁴⁾ + b₂⁽²⁾))  [f=2, every 2 steps]
+  h₂⁽¹⁾ = σ(LN(W₂⁽¹⁾h₂⁽²⁾ + b₂⁽¹⁾))  [f=1, every 4 steps]
+
+Level 1 (Self-Modifying, f=2):
+  K = W_k h₂⁽¹⁾, Q = W_q h₂⁽¹⁾, V = W_v h₂⁽¹⁾
+  attn = softmax(QK^T/√d)V
+  meta = MetaNet(attn)
+  h₁ = W_o(attn + meta)
+  updated every 2 steps
+
+Level 0 (Long-term, f=1):
+  h₀ = σ(LN(W₀h₁ + b₀))
+  updated every 4 steps
+
+Classification:
+  logits = W_cls(σ(W_h h₀ + b_h)) + b_cls
+  P(y=1|x) = softmax(logits)[1]
+
+Loss:
+  L = -[y log P(y=1|x) + (1-y) log P(y=0|x)]
+
+Optimizer (Deep Momentum):
+  m_t = α·m_{t-1} - η·∇L
+  θ_t = θ_{t-1} + m_t
+
+Update Rules:
+  θ^(f_ℓ)_{t+1} = θ^(f_ℓ)_t - η^(ℓ)∇L  if t ≡ 0 (mod max(f)/f_ℓ)
+  θ^(f_ℓ)_{t+1} = θ^(f_ℓ)_t            otherwise
+
+
+PART 8: KEY EQUATIONS FROM PAPER
+================================================================================
+
+1. Associative Memory Objective:
+   M* = arg min_M L(M(K); V)
+
+2. Gradient Descent as Memory:
+   W_{t+1} = arg min_W ⟨W·x, ∇_y L⟩ + (1/2η)||W - W_t||²
+
+3. Momentum as Memory:
+   m_{t+1} = arg min_m -⟨m, ∇L⟩ + η||m - m_t||²
+
+4. Continuum Memory Update:
+   θ^(f_ℓ)_{i+1} = θ^(f_ℓ)_i - Σ_{t=i-C^(ℓ)}^i η_t f(θ_t; x_t)
+   if i ≡ 0 (mod C^(ℓ))
+
+5. Self-Modification:
+   W_{new} = W_{old} + MetaNetwork(context)
+
+================================================================================
+END OF ARCHITECTURE DIAGRAM
+================================================================================
